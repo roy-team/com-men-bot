@@ -1,0 +1,47 @@
+{
+  "name": "ts-skeleton",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "watch": "tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "cd dist && node index.js",
+    "netlify": "netlify dev",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js,tsx,jsx}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.8.1",
+    "openai": "^4.56.1",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.3.0",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "20",
+    "@typescript-eslint/parser": "^7.10.0",
+    "eslint": "^8.56.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.5",
+    "tsc-alias": "^1.8.10",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.10.0"
+  }
+}

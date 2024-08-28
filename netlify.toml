@@ -1,0 +1,13 @@
+[[redirects]]
+  from = "/:secret/handler"
+  to = "/.netlify/functions/handler?secret=:secret"
+  status = 200
+  force = true
+
+[build]
+  publish = "."
+
+[template.environment]
+  BOT_TOKEN = "change me"
+  WEBHOOK_DOMAIN = "https://example.com"
+  WEBHOOK_SECRET = "secret"
