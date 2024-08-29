@@ -2,20 +2,19 @@
  * Отправляет сообщение чат боту и возвращает результат
  */
 
-import Module, { TextContext } from '@src/module.js'
+import Module, { CommandContext } from '@src/module.js'
 import openAIRequest from '@src/plugins/openai.js'
 
 export default class extends Module {
-  // Отключено
-  static enabled = false
-
-  onReceiveText(ctx: TextContext) {
-    void openAIRequest(ctx.message.text).then((value) => {
-      if (value === null) {
-        void ctx.reply('Произошла ошибка')
+  commands = {
+    aibot: (ctx: CommandContext) => {
+      if (ctx.payload === '') {
+        void ctx.reply('Пустой запрос')
       } else {
-        void ctx.reply(value)
+        void openAIRequest(ctx.payload).then(({ message }) => {
+          void ctx.reply(message)
+        })
       }
-    })
+    }
   }
 }

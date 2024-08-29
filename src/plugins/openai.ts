@@ -8,7 +8,7 @@
 import OpenAI from 'openai'
 import type { APIError } from 'openai/error'
 
-export default async function (content: string): Promise<string | null> {
+export default async function (content: string): Promise<{ ok: boolean, message: string }> {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   })
@@ -22,13 +22,22 @@ export default async function (content: string): Promise<string | null> {
       model: process.env.OPENAI_MODEL ?? 'gpt-3.5-turbo',
     })
 
-    return chatCompletion.choices[0].message.content ?? null
+    return {
+      ok: chatCompletion.choices[0].message.content !== null,
+      message: chatCompletion.choices[0].message.content ?? 'Неизвестная ошибка'
+    }
   } catch (error: unknown) {
     if (isAPIError(error)) {
-      return `OpenAI Error: ${error.message}`
+      return {
+        ok: false,
+        message: `OpenAI Error: ${error.message}`,
+      }
     }
 
-    return 'OpenAI Unknown Error'
+    return {
+      ok: false,
+      message: 'OpenAI Unknown Error',
+    }
   }
 }
 
