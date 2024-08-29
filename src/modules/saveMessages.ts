@@ -23,8 +23,8 @@ export default class extends Module {
         let lastTimestamp: number
 
         messages.forEach(({ senderHash, message, timestamp }) => {
-          // Если предыдущее сообщение отправлено этим же человеком менее чем 10 секунд назад, то объединяем в одно
-          if (lastSender === senderHash && timestamp - lastTimestamp < 10 * 1000) {
+          // Если предыдущее сообщение отправлено этим же человеком менее чем 5 секунд назад, то объединяем в одно
+          if (lastSender === senderHash && timestamp - lastTimestamp < 5 * 1000) {
             result[result.length - 1].push(message)
           } else {
             // Собираем формат вывода вида: "[время/дата] отправитель" и далее отправленные сообщения
@@ -42,6 +42,7 @@ export default class extends Module {
       }
     },
 
+    // Очистка списка сообщений
     removeMessages: (ctx: CommandContext) => {
       messages = []
       void ctx.reply('Сообщения очищены')
