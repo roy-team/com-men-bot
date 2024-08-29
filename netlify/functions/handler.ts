@@ -36,12 +36,9 @@ export default async (req: Request) => {
     await fetch(`https://api.telegram.org/bot${botToken}/setWebhook?url=${domain}/${secretToken}/handler`)
   }
 
-  console.log(secret, secretToken)
-
   // Выполнение команд от телеграм, если присутствует секретный токен
   if (secret === secretToken) {
     try {
-      console.log('Run handleUpdate')
       await bot.handleUpdate(await req.json() as Update)
     } catch (e) { /* empty */ }
   }

@@ -68,8 +68,6 @@ export default async function (token: string, pathModules: string): Promise<Tele
 
   // Поддержка получения сообщений в чате
   bot.on(message('text'), (ctx) => {
-    console.log('Event Text')
-
     modules.forEach((module) => {
       module.onReceiveText(ctx)
     })
