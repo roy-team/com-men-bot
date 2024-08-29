@@ -12,7 +12,11 @@ export default class extends Module {
         void ctx.reply('Пустой запрос')
       } else {
         void openAIRequest(ctx.payload).then(({ message }) => {
-          void ctx.reply(message)
+          void ctx.reply(message, {
+            reply_parameters: {
+              message_id: ctx.message.message_id,
+            }
+          })
         })
       }
     }
