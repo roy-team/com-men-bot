@@ -7,6 +7,8 @@
  */
 
 import telegram from '@src/telegram.js'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const botToken = process.env.BOT_TOKEN
 
@@ -22,11 +24,13 @@ if (botToken === undefined ||
   console.error('Environment variables not exist')
 } else {
   // Инициализация телеграм бота и запуск
-  void telegram(botToken).then((bot) => {
-    void bot.launch({ webhook })
+  const pathModules = path.join(path.dirname(fileURLToPath(import.meta.url)), 'modules')
+  void telegram(botToken, pathModules)
+    .then((bot) => {
+      void bot.launch({ webhook })
 
-    // Позволяет "плавно" остановить программу
-    process.once('SIGINT', () => bot.stop('SIGINT'))
-    process.once('SIGTERM', () => bot.stop('SIGTERM'))
-  })
+      // Позволяет "плавно" остановить программу
+      process.once('SIGINT', () => bot.stop('SIGINT'))
+      process.once('SIGTERM', () => bot.stop('SIGTERM'))
+    })
 }
