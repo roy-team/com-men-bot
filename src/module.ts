@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars */
 import { Context } from 'telegraf'
 import { Message, Update } from 'telegraf/types'
+import type { ModelAttributes } from 'sequelize/lib/model'
 
 export type TextContext = Context<Update.MessageUpdate<Message.TextMessage>>
 export type CommandContext = Context<Update.MessageUpdate<Message.TextMessage>> & {
@@ -19,6 +20,9 @@ export default class Module {
 
   // Список команд, на которые реагирует бот
   commands: Record<string, (ctx: CommandContext) => void> = {}
+
+  // Список моделей, требуемых для работы с БД
+  dbModels: Record<string, ModelAttributes> = {}
 
   static init() {
     return new this

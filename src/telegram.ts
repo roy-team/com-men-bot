@@ -4,11 +4,13 @@
 
 import fs from 'node:fs'
 import { Telegraf } from 'telegraf'
-import Module from '@src/module.js'
 import { message } from 'telegraf/filters'
+import Module from '@src/module.js'
+import { initModel, sequelize } from '@src/plugins/sequelize.js'
 
 // Загрузка и хранение списка найденных при запуске модулей
 const modules: Module[] = []
+
 async function loadModules(pathModules: string) {
   for (const fileItem of fs.readdirSync(pathModules)) {
     const extension = fileItem.substring(fileItem.length - 3)
@@ -72,6 +74,14 @@ export default async function (token: string, pathModules: string): Promise<Tele
       module.onReceiveText(ctx)
     })
   })
+
+  // Подключение БД моделей
+  modules.forEach((module) => {
+    Object.keys(module.dbModels).forEach((name) => {
+      initModel(name, module.dbModels[name])
+    })
+  })
+  await sequelize.sync()
 
   return bot
 }
