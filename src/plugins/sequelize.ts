@@ -1,3 +1,12 @@
+/**
+ * Подключение к базе данных.
+ * Переменные окружения:
+ *  DB_TYPE - Тип базы данных, поддерживается sqlite, mariadb.
+ *  DB_HOST - Адрес для подключения к БД (mariadb).
+ *  DB_USER - Имя пользователя для подключения к БД (mariadb).
+ *  DB_PASS - Пароль пользователя для подключения к БД (mariadb).
+ *  DB_NAME - Название БД; в случае sqlite путь к файлу.
+ */
 import { Sequelize } from 'sequelize'
 import type { ModelAttributes } from 'sequelize/lib/model'
 

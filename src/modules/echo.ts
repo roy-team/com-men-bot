@@ -1,9 +1,9 @@
 /**
  * Дублирует отправленное сообщение
  */
-
 import Module, { TextContext } from '@src/module.js'
 
+// noinspection JSUnusedGlobalSymbols
 export default class extends Module {
   // Отключено
   static enabled = false

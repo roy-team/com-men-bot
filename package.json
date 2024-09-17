@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "@netlify/functions": "^2.8.1",
+    "@telegraf/entity": "^0.5.0",
     "mariadb": "^3.3.1",
+    "node-cron": "^3.0.3",
     "openai": "^4.56.1",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7",
@@ -38,6 +40,7 @@
     "@eslint/js": "^9.3.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "20",
+    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/parser": "^7.10.0",
     "eslint": "^8.56.0",
     "husky": "^9.0.11",

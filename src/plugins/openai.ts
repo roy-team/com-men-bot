@@ -4,21 +4,20 @@
  *  OPENAI_API_KEY - API ключ для работы с OpenAI.
  *  OPENAI_MODEL - Используемая модель, по умолчанию 'gpt-3.5-turbo'.
  */
-
 import OpenAI from 'openai'
 import type { APIError } from 'openai/error'
 
-export default async function (content: string): Promise<{ ok: boolean, message: string }> {
+export default async function (content: string[]): Promise<{ ok: boolean, message: string }> {
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   })
 
   try {
     const chatCompletion = await client.chat.completions.create({
-      messages: [{
+      messages: content.map((item) => ({
         role: 'user',
-        content
-      }],
+        content: item,
+      })),
       model: process.env.OPENAI_MODEL ?? 'gpt-3.5-turbo',
     })
 

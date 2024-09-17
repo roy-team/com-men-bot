@@ -4,8 +4,8 @@
  *  BOT_TOKEN - Токен для привязки бота, полученный от BotFather.
  *  WEBHOOK_DOMAIN - Домен, по которому будет доступна программа.
  *  WEBHOOK_SECRET - Секретный текст, который сохранит от посторонних запросов.
+ *  TZ - Временная зона (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
  */
-
 import telegram from '@src/telegram.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
