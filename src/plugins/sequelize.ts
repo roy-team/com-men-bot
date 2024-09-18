@@ -27,6 +27,7 @@ switch (dbType) {
     sequelize = new Sequelize({
       dialect: 'sqlite',
       storage: process.env.DB_NAME,
+      logging: process.env.NODE_ENV === 'production' ? false : console.log,
     })
     break
   case 'mariadb':
@@ -53,6 +54,7 @@ switch (dbType) {
     sequelize = new Sequelize({
       dialect: 'mariadb',
       storage: process.env.DB_NAME,
+      logging: process.env.NODE_ENV === 'production' ? false : console.log,
     })
     break
   default:
