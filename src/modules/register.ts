@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { DataTypes } from 'sequelize'
 import { Context, Markup } from 'telegraf'
 import { escapers } from '@telegraf/entity'
-import Module, { CommandContext } from '@src/module.js'
+import Module, { CommandContext, isGroupMember } from '@src/module.js'
 import { sequelize } from '@src/plugins/sequelize.js'
 import { ChatFromGetChat } from 'telegraf/types'
 
@@ -41,7 +41,7 @@ export default class extends Module {
             if (data.groupId === undefined) {
               ctx.telegram.getChatMember(ctx.payload, ctx.from.id)
                 .then((member) => {
-                  if (member.status === 'creator' || member.status === 'administrator') {
+                  if (['creator', 'administrator'].includes(member.status)) {
                     void sequelize.models.RegisterOptions.create({
                       option: 'group',
                       value: ctx.payload,
@@ -164,9 +164,9 @@ export default class extends Module {
         } else if (data.adminIds.includes(ctx.chat.id.toString())) {
           void ctx.reply('Вы уже являетесь администратором')
         } else {
-          ctx.telegram.getChatMember(data.groupId!, ctx.from.id)
-            .then((member) => {
-              if (['creator', 'administrator', 'member'].includes(member.status)) {
+          isGroupMember(this.bot, data.groupId!, ctx.from.id)
+            .then((result) => {
+              if (result) {
                 void ctx.reply('Вы уже состоите в группе')
               } else {
                 ctx.telegram.getChat(data.groupId!)
