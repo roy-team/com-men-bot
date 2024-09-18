@@ -10,6 +10,7 @@ import openAIRequest from '@src/plugins/openai.js'
 // Поля записи в таблице БД
 interface IStatMessage {
   senderHash: string
+  senderName: string
   message: string
   is_reply: boolean
   timestamp: number
@@ -21,6 +22,10 @@ export default class extends Module {
     // Добавление модели БД для сообщений
     this.dbModels.StatMessages = {
       senderHash: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      senderName: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -40,7 +45,7 @@ export default class extends Module {
 
     // Запланированное событие по формированию статистики с очисткой БД
     this.schedules.push({
-      cronExpression: '13 2 * * *',
+      cronExpression: '59 23 * * *',
       func: () => {
         this.analyze()
           .then(() => {
@@ -72,6 +77,7 @@ export default class extends Module {
   onReceiveTextGroup(ctx: TextContext) {
     void sequelize.models.StatMessages.create({
       senderHash: getHashFromId(ctx.message.from.id),
+      senderName: `${ctx.message.from.first_name} ${ctx.message.from.last_name ?? ''}`.trim(),
       message: ctx.message.text,
       is_reply: ctx.message.reply_to_message !== undefined,
       timestamp: Date.now(),
@@ -81,58 +87,61 @@ export default class extends Module {
   // Анализ списка сообщений
   async analyze() {
     const now = new Date()
+    const nowFormat = [
+      now.getDate().toString().padStart(2, '0'),
+      (now.getMonth() + 1).toString().padStart(2, '0'),
+      now.getFullYear().toString(),
+    ].join('.')
     const registerOptions = await getRegisterOptions()
 
     if (registerOptions.groupId) {
-      const messages = (await sequelize.models.StatMessages.findAll() as unknown as IStatMessage[])
+      const messages: IStatMessage[] = [];
+
+      ((await sequelize.models.StatMessages.findAll()) as unknown as IStatMessage[]).forEach((item) => {
+        // Проверка на пустое сообщение
+        if (item.message.trim().length > 0) {
+          // Если предыдущее сообщение отправлено этим же человеком менее чем 5 секунд назад, то объединяем в одно
+          if (
+            messages.length > 0 &&
+            item.senderHash === messages[messages.length - 1].senderHash &&
+            item.timestamp - messages[messages.length - 1].timestamp < (5 * 1000)
+          ) {
+            messages[messages.length - 1].message += '\n' + item.message
+          } else {
+            messages.push(item)
+          }
+        }
+      })
+
       const subjects: {
         subject: string
         messages: number
       }[] = []
 
       if (messages.length > 0) {
-        const result: string[][] = []
-        let lastSender: string
-        let lastTimestamp: number
-
-        messages.forEach((item) => {
-          const { senderHash, message, timestamp } = item as unknown as IStatMessage
-
-          // Если предыдущее сообщение отправлено этим же человеком менее чем 5 секунд назад, то объединяем в одно
-          if (lastSender === senderHash && timestamp - lastTimestamp < 5 * 1000) {
-            result[result.length - 1].push(message)
-          } else {
-            // Собираем формат вывода вида: "[время/дата] отправитель" и далее отправленные сообщения
-            result.push([
-              `[${new Date(timestamp).toLocaleString()}] ${senderHash}`,
-              message,
-            ])
-          }
-
-          lastSender = senderHash
-          lastTimestamp = timestamp
-        })
-
         // Отправка запроса к ИИ для анализа тематики сообщений
-        const { message } = await openAIRequest([
-          'You are analyzing a series of chat messages and identifying the main discussion topics. For each distinct topic, provide a short title and count the number of messages related to that topic. After listing the topics, provide the total number of messages analyzed. Format the response as follows:\n' +
-          '\n' +
-          'Topic 1 (number of messages on this topic)\n' +
-          'Topic 2 (number of messages on this topic)\n' +
-          '...and so on.\n' +
-          '\n' +
-          'Total number of messages: [total count]\n' +
-          '\n' +
-          'Example:\n' +
-          '\n' +
-          'Food Recipes (12)\n' +
-          'Travel Destinations (8)\n' +
-          'Current Events (5)\n' +
-          '\n' +
-          'Total number of messages: 25\n' +
-          '\n' +
+        const prompt = [
+          'You are analyzing a series of chat messages and identifying the main discussion topics. For each distinct topic, provide a short title and count the number of messages related to that topic. After listing the topics, provide the total number of messages analyzed. Format the response as follows:',
+          '',
+          'Topic 1 (number of messages on this topic)',
+          'Topic 2 (number of messages on this topic)',
+          '...and so on.',
+          '',
+          'Total number of messages: [total count]',
+          '',
+          'Example:',
+          '',
+          'Food Recipes (12)',
+          'Travel Destinations (8)',
+          'Current Events (5)',
+          '',
+          'Total number of messages: 25',
+          '',
           'Analyze the chat and provide a similar breakdown of topics and their respective message counts, along with the total number of messages.',
-          result.map((item) => item.join('\n')).join('\n\n'),
+        ]
+        const { message } = await openAIRequest([
+          prompt.join('\n'),
+          messages.map((item) => `[${new Date(item.timestamp).toLocaleString()}] ${item.senderHash}\n${item.message}`).join('\n\n'),
         ])
 
         for (const mes of message.split('\n')) {
@@ -155,7 +164,7 @@ export default class extends Module {
       const statistics = {
         messages: messages.length,
         messagesByUser: await sequelize.models.StatMessages.count({
-          attributes: ['senderHash'],
+          attributes: ['senderHash', 'senderName'],
           group: 'senderHash',
         }),
         replies: await sequelize.models.StatMessages.count({
@@ -170,22 +179,17 @@ export default class extends Module {
       // Создание и отправка файла
       const csvContent = [
         'Общая статистика:',
-        'Всего сообщений,Всего ответов,Всего участников',
-        `${statistics.messages},${statistics.replies},${statistics.members}`,
+        'Дата,Всего сообщений,Всего ответов,Всего участников',
+        `${nowFormat},${statistics.messages},${statistics.replies},${statistics.members}`,
         '',
         'Распределение сообщений по пользователям:',
-        'ID,Сообщения',
-        ...statistics.messagesByUser.map((item) => `${item.senderHash},${item.count}`),
+        'ID,Имя,Сообщения,Дата',
+        ...statistics.messagesByUser.map((item) => `${item.senderHash},"${item.senderName}",${item.count},${nowFormat}`),
         '',
         'Темы общения в чате:',
-        'Тема,Сообщения',
-        ...subjects.map((item) => `${item.subject},${item.messages}`),
+        'Тема,Сообщения,Дата',
+        ...subjects.map((item) => `"${item.subject}",${item.messages},${nowFormat}`),
       ]
-      const nowFormat = [
-        now.getDate().toString().padStart(2, '0'),
-        (now.getMonth() + 1).toString().padStart(2, '0'),
-        now.getFullYear().toString(),
-      ].join('.')
       const document = {
         source: Buffer.from(csvContent.join('\n'), 'utf-8'),
         filename: `Статистика ${nowFormat}.csv`,
