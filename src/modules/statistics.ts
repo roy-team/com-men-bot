@@ -54,7 +54,7 @@ export default class extends Module {
         })
     }
 
-    this.commands.messagesAnalyze = () => {
+    this.commands.statExport = () => {
       void this.analyze()
     }
   }
@@ -125,7 +125,7 @@ export default class extends Module {
           result.map((item) => item.join('\n')).join('\n\n'),
         ])
 
-        for (let mes of message.split('\n')) {
+        for (const mes of message.split('\n')) {
           if (mes === '') {
             break
           }
@@ -171,9 +171,14 @@ export default class extends Module {
         'Тема,Сообщения',
         ...subjects.map((item) => `${item.subject},${item.messages}`),
       ]
+      const nowFormat = [
+        now.getDate().toString().padStart(2, '0'),
+        (now.getMonth() + 1).toString().padStart(2, '0'),
+        now.getFullYear().toString(),
+      ].join('.')
       const document = {
         source: Buffer.from(csvContent.join('\n'), 'utf-8'),
-        filename: `Статистика ${now.toLocaleDateString()}.csv`,
+        filename: `Статистика ${nowFormat}.csv`,
       }
 
       if (registerOptions.superAdminId) {
