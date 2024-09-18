@@ -91,7 +91,12 @@ const getUsername = (user: User, markdown: boolean = false): string => {
     (user.username ? '@' + user.username : user.first_name)
 }
 
+const isGroupMember = async (bot: Telegraf, groupId: number | string, userId: number) => {
+  return ['creator', 'administrator', 'member'].includes((await bot.telegram.getChatMember(groupId, userId)).status)
+}
+
 export {
   getHashFromId,
   getUsername,
+  isGroupMember,
 }

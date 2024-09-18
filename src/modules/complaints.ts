@@ -1,7 +1,7 @@
 /**
  * Система жалоб на пользователей чата
  */
-import Module, { CommandContext, getUsername } from '@src/module.js'
+import Module, { CommandContext, getUsername, isGroupMember } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 
 // noinspection JSUnusedGlobalSymbols
@@ -11,36 +11,33 @@ export default class extends Module {
       description: 'Отправка жалобы. Пожаловаться на конкретное сообщение можно ответом на это сообщение',
       access: ['privateAll', 'groupAll'],
       func: async (ctx: CommandContext) => {
-        // Проверяем, было ли это ответом на сообщение
-        if (ctx.message.reply_to_message) {
-          const data = await getRegisterOptions()
+        const data = await getRegisterOptions()
+        let forwardMessage
 
-          // На всякий случай проверить, была ли регистрация чата
-          if (data.superAdminId && data.groupId) {
-            // Переслать администратору сообщение, на которое была жалоба, с указанием жалобщика
-            const forwardMessage = await ctx.telegram.forwardMessage(
+        // На всякий случай проверить, была ли регистрация чата
+        if (data.superAdminId && data.groupId) {
+          // Является ли автор жалобы членом группы, если запрос был в приватном чате
+          if (ctx.chat.type === 'private' && !(await isGroupMember(this.bot, data.groupId, ctx.from.id))) {
+            return
+          }
+
+          // Переслать администратору сообщение, на которое была жалоба, если было отмечено
+          if (ctx.message.reply_to_message) {
+            forwardMessage = await ctx.telegram.forwardMessage(
               data.superAdminId,
               data.groupId,
               ctx.message.reply_to_message.message_id
             )
-            await ctx.telegram.sendMessage(data.superAdminId, 'Жалоба от пользователя ' + getUsername(ctx.from, true), {
-              parse_mode: 'MarkdownV2',
-              reply_parameters: {
-                message_id: forwardMessage.message_id,
-                chat_id: data.superAdminId,
-              }
-            })
-
-            if (ctx.payload.trim() !== '') {
-              // Если есть дополнительный текст жалобы, то также отправить администратору
-              await ctx.telegram.sendMessage(data.superAdminId, ctx.payload.trim(), {
-                reply_parameters: {
-                  message_id: forwardMessage.message_id,
-                  chat_id: data.superAdminId,
-                }
-              })
-            }
           }
+
+          // Отправить администратору информацию об авторе жалобы
+          await ctx.telegram.sendMessage(data.superAdminId, 'Жалоба от пользователя ' + getUsername(ctx.from, true), {
+            parse_mode: 'MarkdownV2',
+            reply_parameters: forwardMessage ? {
+              message_id: forwardMessage.message_id,
+              chat_id: data.superAdminId,
+            } : undefined,
+          })
         }
       }
     }
