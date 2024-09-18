@@ -87,7 +87,7 @@ const getHashFromId = (id: number | string): string => createHash('sha1').update
 // Получить имя пользователя либо личное имя
 const getUsername = (user: User, markdown: boolean = false): string => {
   return markdown ?
-    (user.username ? '\\@' + user.username : `\`${escapers.MarkdownV2(user.first_name)}\``) :
+    (user.username ? '\\@' + escapers.MarkdownV2(user.username) : `\`${escapers.MarkdownV2(user.first_name)}\``) :
     (user.username ? '@' + user.username : user.first_name)
 }
 
