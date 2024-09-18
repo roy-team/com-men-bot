@@ -74,6 +74,16 @@ export default class extends Module {
     }
   }
 
+  onReceiveForwardGroup(ctx: TextContext) {
+    void sequelize.models.StatMessages.create({
+      senderHash: getHashFromId(ctx.message.from.id),
+      senderName: `${ctx.message.from.first_name} ${ctx.message.from.last_name ?? ''}`.trim(),
+      message: ctx.message.text,
+      is_reply: ctx.message.reply_to_message !== undefined,
+      timestamp: Date.now(),
+    })
+  }
+
   onReceiveTextGroup(ctx: TextContext) {
     void sequelize.models.StatMessages.create({
       senderHash: getHashFromId(ctx.message.from.id),
