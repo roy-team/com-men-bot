@@ -15,6 +15,12 @@ import {
   MessageOriginUser
 } from '@telegraf/types/message.js'
 
+export type BotCommand = {
+  description: string
+  access?: ('privateAll' | 'privateAdmin' | 'groupAll' | 'groupAdmin' | 'groupSuperAdmin')[]
+  func: (ctx: CommandContext) => void
+}
+
 export type TextContext = Context<Update.MessageUpdate<Message.TextMessage>>
 export type CommandContext = Context<Update.MessageUpdate<Message.TextMessage>> & {
   command: string
@@ -40,7 +46,7 @@ export default class Module {
   }[] = []
 
   // Список команд, на которые реагирует бот
-  commands: Record<string, (ctx: CommandContext) => void> = {}
+  commands: Record<string, BotCommand> = {}
 
   static init(bot: Telegraf) {
     return new this(bot)
@@ -55,9 +61,6 @@ export default class Module {
 
   // Реакция на предопределенную команду start
   startCommand(ctx: CommandContext): void {}
-
-  // Реакция на предопределенную команду help
-  helpCommand(ctx: CommandContext): void {}
 
   // Реакция на получение пересланного сообщения в личном чате
   onReceiveForward(

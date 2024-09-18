@@ -10,17 +10,21 @@ export default class extends Module {
   static enabled = false
 
   setup() {
-    this.commands.aibot = (ctx: CommandContext) => {
-      if (ctx.payload === '') {
-        void ctx.reply('Пустой запрос')
-      } else {
-        void openAIRequest([ctx.payload]).then(({ message }) => {
-          void ctx.reply(message, {
-            reply_parameters: {
-              message_id: ctx.message.message_id,
-            }
+    this.commands.aibot = {
+      description: 'Отправить сообщение ИИ-боту',
+      access: ['privateAdmin'],
+      func: (ctx: CommandContext) => {
+        if (ctx.payload === '') {
+          void ctx.reply('Пустой запрос')
+        } else {
+          void openAIRequest([ctx.payload]).then(({ message }) => {
+            void ctx.reply(message, {
+              reply_parameters: {
+                message_id: ctx.message.message_id,
+              }
+            })
           })
-        })
+        }
       }
     }
   }

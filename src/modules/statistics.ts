@@ -38,24 +38,34 @@ export default class extends Module {
       },
     }
 
-    // Запланированное событие по анализу
+    // Запланированное событие по формированию статистики с очисткой БД
     this.schedules.push({
       cronExpression: '13 2 * * *',
       func: () => {
-        void this.analyze()
+        this.analyze()
+          .then(() => {
+            void sequelize.models.StatMessages.truncate()
+          })
       },
     })
 
     // Очистка списка сообщений
-    this.commands.statClear = (ctx: CommandContext) => {
-      void sequelize.models.StatMessages.truncate()
-        .then(() => {
-          void ctx.reply('Статистка очищена')
-        })
+    this.commands.statClear = {
+      description: 'Очистка текущей статистики',
+      func: (ctx: CommandContext) => {
+        void sequelize.models.StatMessages.truncate()
+          .then(() => {
+            void ctx.reply('Статистка очищена')
+          })
+      }
     }
 
-    this.commands.statExport = () => {
-      void this.analyze()
+    // Запрос на принудительное формирование статистики без очистки БД
+    this.commands.statExport = {
+      description: 'Получение текущей статистики',
+      func: () => {
+        void this.analyze()
+      }
     }
   }
 
@@ -181,15 +191,9 @@ export default class extends Module {
         filename: `Статистика ${nowFormat}.csv`,
       }
 
-      if (registerOptions.superAdminId) {
-        void this.bot.telegram.sendDocument(registerOptions.superAdminId, document)
-      }
-
       registerOptions.adminIds.forEach((id) => {
         void this.bot.telegram.sendDocument(id, document)
       })
-
-      void sequelize.models.StatMessages.truncate()
     }
   }
 }

@@ -32,53 +32,57 @@ export default class extends Module {
     }
 
     // Регистрация группы
-    this.commands.registerGroup = (ctx: CommandContext) => {
-      getRegisterOptions()
-        .then((data) => {
-          if (data.groupId === undefined) {
-            ctx.telegram.getChatMember(ctx.payload, ctx.from.id)
-              .then((member) => {
-                if (member.status === 'creator' || member.status === 'administrator') {
-                  void sequelize.models.RegisterOptions.create({
-                    option: 'group',
-                    value: ctx.payload,
-                  })
-                  void sequelize.models.RegisterOptions.create({
-                    option: 'super_admin',
-                    value: ctx.from.id.toString(),
-                  })
-
-                  ctx.telegram.getChat(ctx.payload)
-                    .then((chat) => {
-                      const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
-                      void ctx.reply(
-                        `Группа *${chatTitle}* успешно зарегистрирована\\. Вы добавлены как супер администратор`,
-                        {
-                          parse_mode: 'MarkdownV2',
-                        }
-                      )
+    this.commands.registerGroup = {
+      description: 'Регистрация группы. Разовое действие для настройки бота',
+      access: ['privateAll'],
+      func: (ctx: CommandContext) => {
+        getRegisterOptions()
+          .then((data) => {
+            if (data.groupId === undefined) {
+              ctx.telegram.getChatMember(ctx.payload, ctx.from.id)
+                .then((member) => {
+                  if (member.status === 'creator' || member.status === 'administrator') {
+                    void sequelize.models.RegisterOptions.create({
+                      option: 'group',
+                      value: ctx.payload,
                     })
-                } else {
-                  void ctx.reply('Вы должны быть администратором группы')
-                }
-              })
-              .catch((e) => {
-                console.error(e)
-                void ctx.reply('Проверьте ID чата')
-              })
-          } else {
-            ctx.telegram.getChat(data.groupId)
-              .then((chat) => {
-                const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
-                void ctx.reply(
-                  `Уже зарегистрирована группа *${chatTitle}*`,
-                  {
-                    parse_mode: 'MarkdownV2',
+                    void sequelize.models.RegisterOptions.create({
+                      option: 'super_admin',
+                      value: ctx.from.id.toString(),
+                    })
+
+                    ctx.telegram.getChat(ctx.payload)
+                      .then((chat) => {
+                        const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
+                        void ctx.reply(
+                          `Группа *${chatTitle}* успешно зарегистрирована\\. Вы добавлены как супер администратор`,
+                          {
+                            parse_mode: 'MarkdownV2',
+                          }
+                        )
+                      })
+                  } else {
+                    void ctx.reply('Вы должны быть администратором группы')
                   }
-                )
-              })
-          }
-        })
+                })
+                .catch((e) => {
+                  console.error(e)
+                  void ctx.reply('Проверьте ID чата')
+                })
+            } else {
+              ctx.telegram.getChat(data.groupId)
+                .then((chat) => {
+                  const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
+                  void ctx.reply(
+                    `Уже зарегистрирована группа *${chatTitle}*`,
+                    {
+                      parse_mode: 'MarkdownV2',
+                    }
+                  )
+                })
+            }
+          })
+      }
     }
 
     this.bot.action(/register_task_.*/, (ctx) => {
@@ -181,6 +185,10 @@ export async function getRegisterOptions() {
         }
     }
   })
+
+  if (superAdminId) {
+    adminIds.unshift(superAdminId)
+  }
 
   return {
     groupId,
