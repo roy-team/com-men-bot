@@ -11,4 +11,8 @@ export default class extends Module {
   onReceiveText(ctx: TextContext) {
     void ctx.reply(ctx.message.text)
   }
+
+  onReceiveTextGroup(ctx: TextContext) {
+    void ctx.reply(ctx.message.text)
+  }
 }
