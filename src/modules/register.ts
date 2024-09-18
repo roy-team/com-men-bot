@@ -87,18 +87,19 @@ export default class extends Module {
 
     this.bot.action(/register_task_.*/, (ctx) => {
       void ctx.answerCbQuery()
-        .then(() => {
-          void ctx.deleteMessage()
+        .then(async () => {
+          void ctx.deleteMessage(ctx.callbackQuery.message?.message_id)
           const query = (ctx.callbackQuery as unknown as { data?: string }).data?.split('_') ?? []
 
           if (query.length === 4 && query[2] === getTaskHash(query[3])) {
-            void ctx.reply('Чтобы вступить в группу примите правила группы', {
+            const rulesMessage = await ctx.reply('Здесь могли быть Ваши правила:)', {
               ...Markup.inlineKeyboard([
                 [
                   Markup.button.callback('Принять правила', 'register_rules_accept'),
                 ],
               ]),
             })
+            await ctx.pinChatMessage(rulesMessage.message_id)
           } else {
             verifyStep1(ctx, false)
           }
@@ -109,13 +110,15 @@ export default class extends Module {
       void ctx.answerCbQuery()
         .then(() => {
           if (ctx.update.callback_query.message) {
-            void ctx.deleteMessage()
+            void ctx.editMessageReplyMarkup({
+              inline_keyboard: []
+            })
 
             getRegisterOptions()
               .then((data) => {
                 if (data.groupId) {
                   ctx.telegram.createChatInviteLink(data.groupId, {
-                    expire_date: Math.ceil(Date.now() / 1000) + 24 * 60 * 60,
+                    expire_date: Math.ceil(Date.now() / 1000) + 60 * 60,
                     member_limit: 1,
                   }).then((link) => {
                     void ctx.reply(link.invite_link)
