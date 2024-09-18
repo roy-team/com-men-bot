@@ -102,16 +102,18 @@ export default class extends Module {
             }
 
             // Удалить сообщение в общем чате
-            void ctx.deleteMessage(ctx.message.message_id)
+            void ctx.deleteMessage()
             // Написать о неприемлемом контенте с указанием имени нарушителя
-            void ctx.reply(user + ', это неприемлемый контент, он будет удален\\.', {
+            void ctx.reply(user + ', это неприемлемый контент, он был удален\\.', {
               parse_mode: 'MarkdownV2',
             })
           }
         })
     } else {
-      // Сохранить контекст общения (последние 5 сообщений)
-      this.lastMessages.push(ctx.message.text)
+      // Сохранить контекст общения (последние 5 сообщений длиной больше 10 символов)
+      if (ctx.message.text.length > 10) {
+        this.lastMessages.push(ctx.message.text)
+      }
 
       while (this.lastMessages.length > 5) {
         this.lastMessages.shift()
