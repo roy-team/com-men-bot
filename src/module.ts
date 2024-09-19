@@ -18,6 +18,7 @@ import {
 export type BotCommand = {
   description: string
   access?: ('privateAll' | 'privateAdmin' | 'groupAll' | 'groupAdmin' | 'groupSuperAdmin')[]
+  addToList?: number
   func: (ctx: CommandContext) => void
 }
 

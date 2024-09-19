@@ -9,6 +9,7 @@ import { escapers } from '@telegraf/entity'
 import Module, { BotCommand } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 import { initModel, sequelize } from '@src/plugins/sequelize.js'
+import { BotCommand as tgBotCommand } from '@telegraf/types'
 
 // Загрузка и хранение списка найденных при запуске модулей
 const modules: Module[] = []
@@ -124,6 +125,7 @@ export default async function (token: string, pathModules: string): Promise<Tele
 
   // Регистрация списка команд и контроль разрешения на выполнение
   const regOptions = await getRegisterOptions()
+  const myCommands: (tgBotCommand & { sort: number })[] = []
   for (const name in commands) {
     bot.command(name, (ctx) => {
       const access = commands[name].access ?? []
@@ -150,7 +152,17 @@ export default async function (token: string, pathModules: string): Promise<Tele
         commands[name].func(ctx)
       }
     })
+
+    if (commands[name].addToList !== undefined) {
+      myCommands.push({
+        command: name,
+        description: commands[name].description,
+        sort: commands[name].addToList,
+      })
+    }
   }
+  myCommands.sort((a, b) => a.sort - b.sort)
+  void bot.telegram.setMyCommands(myCommands)
 
   // Поддержка получения прямых и пересланных текстовых сообщений в чате
   bot.on(message('text'), (ctx) => {

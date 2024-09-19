@@ -10,6 +10,7 @@ export default class extends Module {
     this.commands.complaint = {
       description: 'Отправка жалобы. Пожаловаться на конкретное сообщение можно ответом на это сообщение',
       access: ['privateAll', 'groupAll'],
+      addToList: 30,
       func: async (ctx: CommandContext) => {
         const data = await getRegisterOptions()
         let forwardMessage
