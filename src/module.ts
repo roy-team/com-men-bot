@@ -14,6 +14,7 @@ import {
   MessageOriginHiddenUser,
   MessageOriginUser
 } from '@telegraf/types/message.js'
+import { MyTelegraf, TConversationData } from '@src/telegraf.js'
 
 export type BotCommand = {
   title: string
@@ -35,7 +36,7 @@ export default class Module {
   static enabled = true
 
   // Для обратного обращения к боту из модулей
-  readonly bot: Telegraf
+  readonly bot: MyTelegraf
 
   // Список моделей, требуемых для работы с БД
   dbModels: Record<string, ModelAttributes> = {}
@@ -53,11 +54,11 @@ export default class Module {
   // Список тегов для создания тематической беседы/опроса
   conversationTags: string[] = []
 
-  static init(bot: Telegraf) {
+  static init(bot: MyTelegraf) {
     return new this(bot)
   }
 
-  constructor(bot: Telegraf) {
+  constructor(bot: MyTelegraf) {
     this.bot = bot
     this.setup()
   }
@@ -66,6 +67,9 @@ export default class Module {
 
   // Реакция на предопределенную команду start
   startCommand(ctx: CommandContext): void {}
+
+  // Реакция на получение сообщения в пределах беседы/опроса
+  onConversation(ctx: TextContext, conversation: TConversationData): void {}
 
   // Реакция на получение пересланного сообщения в личном чате
   onReceiveForward(

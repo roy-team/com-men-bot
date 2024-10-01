@@ -3,13 +3,13 @@
  */
 import fs from 'node:fs'
 import NodeCron from 'node-cron'
-import { Telegraf } from 'telegraf'
 import { message } from 'telegraf/filters'
 import { escapers } from '@telegraf/entity'
 import Module, { BotCommand } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 import { initModel, sequelize } from '@src/plugins/sequelize.js'
 import { BotCommand as tgBotCommand } from '@telegraf/types'
+import { MyTelegraf } from '@src/telegraf.js'
 
 // Загрузка и хранение списка найденных при запуске модулей
 const modules: Module[] = []
@@ -52,7 +52,7 @@ const commands: Record<string, BotCommand> = {
   },
 }
 
-async function loadModules(pathModules: string, bot: Telegraf) {
+async function loadModules(pathModules: string, bot: MyTelegraf) {
   for (const fileItem of fs.readdirSync(pathModules)) {
     const extension = fileItem.substring(fileItem.length - 3)
     if (extension !== '.ts' && extension !== '.js') {
@@ -76,8 +76,8 @@ async function loadModules(pathModules: string, bot: Telegraf) {
   console.debug('Loaded modules: ' + modules.length.toString())
 }
 
-export default async function (token: string, pathModules: string): Promise<Telegraf> {
-  const bot = new Telegraf(token)
+export default async function (token: string, pathModules: string): Promise<MyTelegraf> {
+  const bot = new MyTelegraf(token)
 
   // Подключение функционала модулей на различные события в телеграм
   await loadModules(pathModules, bot)
@@ -132,7 +132,7 @@ export default async function (token: string, pathModules: string): Promise<Tele
   const regOptions = await getRegisterOptions()
   const myCommands: (tgBotCommand & { sort: number })[] = []
   for (const name in commands) {
-    bot.command(name, (ctx) => {
+    bot.command(toKebabCase(name), (ctx) => {
       const access = commands[name].access ?? []
       let allow
 
@@ -160,7 +160,7 @@ export default async function (token: string, pathModules: string): Promise<Tele
 
     if (commands[name].addToList !== undefined) {
       myCommands.push({
-        command: name,
+        command: toKebabCase(name),
         description: commands[name].title,
         sort: commands[name].addToList,
       })
@@ -172,6 +172,15 @@ export default async function (token: string, pathModules: string): Promise<Tele
   // Поддержка получения прямых и пересланных текстовых сообщений в чате
   bot.on(message('text'), (ctx) => {
     modules.forEach((module) => {
+      if (ctx.update.message.chat.type === 'private') {
+        const conversation = bot.hasConversation(ctx.from.id)
+
+        if (conversation && module.conversationTags.includes(conversation.tag)) {
+          module.onConversation(ctx, conversation)
+          return
+        }
+      }
+
       if (ctx.update.message.forward_origin === undefined) {
         // Прямое сообщение
         if (ctx.update.message.chat.type === 'private') {
@@ -199,4 +208,8 @@ export default async function (token: string, pathModules: string): Promise<Tele
   })
 
   return bot
+}
+
+function toKebabCase(name: string) {
+  return name.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
 }
