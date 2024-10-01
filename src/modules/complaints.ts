@@ -6,9 +6,12 @@ import { getRegisterOptions } from '@src/modules/register.js'
 
 // noinspection JSUnusedGlobalSymbols
 export default class extends Module {
+  conversationTags = ['complaint']
+
   setup() {
     this.commands.complaint = {
-      description: 'Отправка жалобы. Пожаловаться на конкретное сообщение можно ответом на это сообщение',
+      title: 'Отправка жалобы',
+      description: 'Пожаловаться на конкретное сообщение можно ответом на это сообщение',
       access: ['privateAll', 'groupAll'],
       addToList: 30,
       func: async (ctx: CommandContext) => {
@@ -40,6 +43,15 @@ export default class extends Module {
             } : undefined,
           })
         }
+      }
+    }
+
+    this.commands.complaintAdv = {
+      title: 'Отправка жалобы расширенная',
+      access: ['privateAll'],
+      addToList: 31,
+      func: async (ctx: CommandContext) => {
+
       }
     }
   }

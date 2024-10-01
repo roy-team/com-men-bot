@@ -3,7 +3,7 @@ import Module from '@src/module.js'
 export default class extends Module {
   setup() {
     this.commands.offers = {
-      description: 'Предложения',
+      title: 'Предложения',
       access: ['privateAll', 'groupAll'],
       addToList: 40,
       func: (ctx) => {

@@ -11,7 +11,7 @@ export default class extends Module {
 
   setup() {
     this.commands.aibot = {
-      description: 'Отправить сообщение ИИ-боту',
+      title: 'Отправить сообщение ИИ-боту',
       access: ['privateAdmin'],
       func: (ctx: CommandContext) => {
         if (ctx.payload === '') {

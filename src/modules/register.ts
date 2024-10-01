@@ -33,7 +33,8 @@ export default class extends Module {
 
     // Регистрация группы
     this.commands.registerGroup = {
-      description: 'Регистрация группы. Разовое действие для настройки бота',
+      title: 'Регистрация группы',
+      description: 'Разовое действие для настройки бота',
       access: ['privateAll'],
       func: (ctx: CommandContext) => {
         getRegisterOptions()

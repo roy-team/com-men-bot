@@ -56,7 +56,7 @@ export default class extends Module {
 
     // Очистка списка сообщений
     this.commands.statClear = {
-      description: 'Очистка текущей статистики',
+      title: 'Очистка текущей статистики',
       func: (ctx: CommandContext) => {
         void sequelize.models.StatMessages.truncate()
           .then(() => {
@@ -67,7 +67,7 @@ export default class extends Module {
 
     // Запрос на принудительное формирование статистики без очистки БД
     this.commands.statExport = {
-      description: 'Получение текущей статистики',
+      title: 'Получение текущей статистики',
       func: () => {
         void this.analyze()
       }

@@ -17,7 +17,7 @@ const modules: Module[] = []
 // Хранение списка команд
 const commands: Record<string, BotCommand> = {
   commands: {
-    description: 'Получить список зарегистрированных команд',
+    title: 'Список доступных команд',
     func: async (ctx) => {
       const output = []
 
@@ -32,11 +32,16 @@ const commands: Record<string, BotCommand> = {
             ),
         }
 
-        output.push(`/${name} \\- ${escapers.MarkdownV2(commands[name].description)}`)
-        output.push(`\\- _приватный чат: *${allowed.private}*_`)
+        output.push(`\n/${name} \\- ${escapers.MarkdownV2(commands[name].title)}`)
+
+        if (commands[name].description) {
+          output.push(`_${escapers.MarkdownV2(commands[name].description)}_`)
+        }
+
+        output.push(`\\- приватный чат: *${allowed.private}*`)
 
         if (allowed.group !== '') {
-          output.push(`\\- _групповой чат: *${allowed.group}*_`)
+          output.push(`\\- групповой чат: *${allowed.group}*`)
         }
       }
 
@@ -156,7 +161,7 @@ export default async function (token: string, pathModules: string): Promise<Tele
     if (commands[name].addToList !== undefined) {
       myCommands.push({
         command: name,
-        description: commands[name].description,
+        description: commands[name].title,
         sort: commands[name].addToList,
       })
     }

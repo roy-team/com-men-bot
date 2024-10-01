@@ -16,7 +16,8 @@ import {
 } from '@telegraf/types/message.js'
 
 export type BotCommand = {
-  description: string
+  title: string
+  description?: string
   access?: ('privateAll' | 'privateAdmin' | 'groupAll' | 'groupAdmin' | 'groupSuperAdmin')[]
   addToList?: number
   func: (ctx: CommandContext) => void
@@ -48,6 +49,9 @@ export default class Module {
 
   // Список команд, на которые реагирует бот
   commands: Record<string, BotCommand> = {}
+
+  // Список тегов для создания тематической беседы/опроса
+  conversationTags: string[] = []
 
   static init(bot: Telegraf) {
     return new this(bot)

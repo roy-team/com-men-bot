@@ -3,7 +3,7 @@ import Module from '@src/module.js'
 export default class extends Module {
   setup() {
     this.commands.rules = {
-      description: 'Правила',
+      title: 'Правила',
       access: ['privateAll', 'groupAll'],
       addToList: 10,
       func: (ctx) => {
