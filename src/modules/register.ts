@@ -2,35 +2,15 @@
  * Регистрация в боте группы и администраторов
  */
 import { createHash } from 'node:crypto'
-import { DataTypes } from 'sequelize'
 import { Context, Markup } from 'telegraf'
 import { escapers } from '@telegraf/entity'
 import Module, { CommandContext, isGroupMember } from '@src/module.js'
-import { sequelize } from '@src/plugins/sequelize.js'
 import { ChatFromGetChat } from 'telegraf/types'
-
-// Поля записи в таблице БД
-interface IRegisterOption {
-  option: string
-  value: string
-}
+import { getSetting, setSettings } from '@src/telegram.js'
 
 // noinspection JSUnusedGlobalSymbols
 export default class extends Module {
   setup() {
-    // Добавление модели БД
-    this.dbModels.RegisterOptions = {
-      option: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      value: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
-    }
-
     // Регистрация группы
     this.commands.registerGroup = {
       title: 'Регистрация группы',
@@ -43,13 +23,9 @@ export default class extends Module {
               ctx.telegram.getChatMember(ctx.payload, ctx.from.id)
                 .then((member) => {
                   if (['creator', 'administrator'].includes(member.status)) {
-                    void sequelize.models.RegisterOptions.create({
-                      option: 'group',
-                      value: ctx.payload,
-                    })
-                    void sequelize.models.RegisterOptions.create({
-                      option: 'super_admin',
-                      value: ctx.from.id.toString(),
+                    void setSettings({
+                      registerGroup: ctx.payload,
+                      registerSuperAdmin: ctx.from.id.toString(),
                     })
 
                     ctx.telegram.getChat(ctx.payload)
@@ -158,7 +134,7 @@ export default class extends Module {
           void ctx.reply([
             'Для первоначальной настройки:',
             '1. Добавьте бота в группу с правами администратора',
-            '2. Отправьте сюда команду для регистрации группы /registerGroup <ID_группы>',
+            '2. Отправьте сюда команду для регистрации группы /register_group <ID_группы>',
           ].join('\n'))
         } else if (data.superAdminId === ctx.chat.id.toString()) {
           void ctx.reply('Вы уже являетесь супер администратором')
@@ -187,35 +163,21 @@ export default class extends Module {
 }
 
 export async function getRegisterOptions() {
-  let groupId: string | undefined
-  let superAdminId: string | undefined
-  let adminIds: string[] = [];
+  const superAdminId = await getSetting('registerSuperAdmin')
+  let adminIds: string[]
 
-  (await sequelize.models.RegisterOptions.findAll()).forEach((row) => {
-    const { option, value } = row as unknown as IRegisterOption
-
-    switch (option) {
-      case 'group':
-        groupId = value
-        break
-      case 'super_admin':
-        superAdminId = value
-        break
-      case 'admins':
-        try {
-          adminIds = JSON.parse(value) ?? []
-        } catch (e) {
-          adminIds = []
-        }
-    }
-  })
+  try {
+    adminIds = JSON.parse(await getSetting('registerAdmins') ?? '[]') ?? []
+  } catch (e) {
+    adminIds = []
+  }
 
   if (superAdminId) {
     adminIds.unshift(superAdminId)
   }
 
   return {
-    groupId,
+    groupId: await getSetting('registerGroup'),
     superAdminId,
     adminIds,
   }

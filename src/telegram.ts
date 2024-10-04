@@ -10,6 +10,7 @@ import { getRegisterOptions } from '@src/modules/register.js'
 import { initModel, sequelize } from '@src/plugins/sequelize.js'
 import { BotCommand as tgBotCommand } from '@telegraf/types'
 import { MyTelegraf } from '@src/telegraf.js'
+import { DataTypes } from 'sequelize'
 
 // Загрузка и хранение списка найденных при запуске модулей
 const modules: Module[] = []
@@ -82,7 +83,18 @@ export default async function (token: string, pathModules: string): Promise<MyTe
   // Подключение функционала модулей на различные события в телеграм
   await loadModules(pathModules, bot)
 
-  // Подключение БД моделей
+  // Подключение БД моделей, включая глобальные настройки
+  initModel('Settings', {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    value: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+  })
   modules.forEach((module) => {
     Object.keys(module.dbModels).forEach((name) => {
       initModel(name, module.dbModels[name])
@@ -129,10 +141,10 @@ export default async function (token: string, pathModules: string): Promise<MyTe
   console.debug('Found commands: ' + Object.keys(commands).length.toString())
 
   // Регистрация списка команд и контроль разрешения на выполнение
-  const regOptions = await getRegisterOptions()
   const myCommands: (tgBotCommand & { sort: number })[] = []
   for (const name in commands) {
-    bot.command(toKebabCase(name), (ctx) => {
+    bot.command(toKebabCase(name), async (ctx) => {
+      const regOptions = await getRegisterOptions()
       const access = commands[name].access ?? []
       let allow
 
@@ -146,7 +158,7 @@ export default async function (token: string, pathModules: string): Promise<MyTe
           return
         }
 
-        ctx.deleteMessage()
+        void ctx.deleteMessage()
         allow =
           access.includes('groupAll') ||
           access.includes('groupAdmin') && regOptions.adminIds.includes(ctx.from.id.toString()) ||
@@ -170,7 +182,8 @@ export default async function (token: string, pathModules: string): Promise<MyTe
   void bot.telegram.setMyCommands(myCommands)
 
   // Поддержка получения прямых и пересланных текстовых сообщений в чате
-  bot.on(message('text'), (ctx) => {
+  bot.on(message('text'), async (ctx) => {
+    const regOptions = await getRegisterOptions()
     modules.forEach((module) => {
       if (ctx.update.message.chat.type === 'private') {
         const conversation = bot.hasConversation(ctx.from.id)
@@ -212,4 +225,44 @@ export default async function (token: string, pathModules: string): Promise<MyTe
 
 function toKebabCase(name: string) {
   return name.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
+}
+
+export async function getSetting(name: string) {
+  const row = await sequelize.models.Settings.findOne({ where: { name } }) as unknown as
+    { name: string, value: string } | null
+
+  return row !== null ? row.value : undefined
+}
+
+export async function setSetting(name: string, value: string) {
+  await setSettings(name, value)
+}
+
+export async function deleteSetting(name: string) {
+  await setSettings(name)
+}
+
+export async function setSettings(name: string | Record<string, string | undefined>, value?: string) {
+  let values: Record<string, string | undefined> = {}
+
+  if (typeof name === 'string') {
+    values[name] = value
+  } else {
+    values = name
+  }
+
+  for (let item in values) {
+    if (values[item]) {
+      void sequelize.models.Settings.upsert({
+        name: item,
+        value: values[item],
+      })
+    } else {
+      void sequelize.models.Settings.destroy({
+        where: {
+          name: item,
+        },
+      })
+    }
+  }
 }

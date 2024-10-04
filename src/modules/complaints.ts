@@ -4,6 +4,7 @@
 import Module, { CommandContext, getUsername, isGroupMember, TextContext } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 import { TConversationData } from '@src/telegraf.js'
+import openAIRequest from '@src/plugins/openai.js'
 
 // noinspection JSUnusedGlobalSymbols
 export default class extends Module {
@@ -17,7 +18,6 @@ export default class extends Module {
       addToList: 30,
       func: async (ctx: CommandContext) => {
         const data = await getRegisterOptions()
-        let forwardMessage
 
         // На всякий случай проверить, была ли регистрация чата
         if (data.superAdminId && data.groupId) {
@@ -88,6 +88,10 @@ export default class extends Module {
               // Отправить администратору информацию об опросе
               await ctx.telegram.sendMessage(data.superAdminId, 'Ответы на опрос:\n' +
                                                                 conversation.context.join('\n------------------------------\n'))
+
+              // Анализ жалобы с помощью ИИ
+              const { message } = await openAIRequest([])
+              await ctx.telegram.sendMessage(data.superAdminId, message)
             }
           })
     }

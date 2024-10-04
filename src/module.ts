@@ -91,21 +91,17 @@ export default class Module {
 }
 
 // Преобразовать ID в хеш
-const getHashFromId = (id: number | string): string => createHash('sha1').update(id.toString()).digest('hex')
+export function getHashFromId(id: number | string): string {
+  return createHash('sha1').update(id.toString()).digest('hex')
+}
 
 // Получить имя пользователя либо личное имя
-const getUsername = (user: User, markdown: boolean = false): string => {
+export function getUsername(user: User, markdown: boolean = false): string {
   return markdown ?
     (user.username ? '\\@' + escapers.MarkdownV2(user.username) : `\`${escapers.MarkdownV2(user.first_name)}\``) :
     (user.username ? '@' + user.username : user.first_name)
 }
 
-const isGroupMember = async (bot: Telegraf, groupId: number | string, userId: number) => {
+export async function isGroupMember(bot: Telegraf, groupId: number | string, userId: number) {
   return ['creator', 'administrator', 'member'].includes((await bot.telegram.getChatMember(groupId, userId)).status)
-}
-
-export {
-  getHashFromId,
-  getUsername,
-  isGroupMember,
 }
