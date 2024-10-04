@@ -28,7 +28,7 @@ export default class extends Module {
 
           // Начать опрос по сути жалобы
           void ctx.telegram.sendMessage(ctx.from.id, 'Опишите коротко суть жалобы\n(Пожалуйста, укажите конкретные детали инцидента, которые вызвали вашу жалобу)\nВы можете прервать опрос используя команду /stop')
-          this.bot.initConversation(ctx, 'complaint')
+          this.bot.initConversation(ctx.from.id, 'complaint')
 
           // Сохранить ID сообщения, на которое была жалоба, если было отмечено
           this.bot.addConversationContext(ctx.from.id, (ctx.message.reply_to_message ? ctx.message.reply_to_message.message_id : 0).toString())
@@ -88,6 +88,9 @@ export default class extends Module {
               // Отправить администратору информацию об опросе
               await ctx.telegram.sendMessage(data.superAdminId, 'Ответы на опрос:\n' +
                                                                 conversation.context.join('\n------------------------------\n'))
+
+              // Остановить текущий опрос
+              this.bot.stopConversation(ctx.from.id)
 
               // Анализ жалобы с помощью ИИ
               const { message } = await openAIRequest([])

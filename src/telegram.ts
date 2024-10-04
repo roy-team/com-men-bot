@@ -33,7 +33,7 @@ const commands: Record<string, BotCommand> = {
             ),
         }
 
-        output.push(`\n/${name} \\- ${escapers.MarkdownV2(commands[name].title)}`)
+        output.push(`\n/${escapers.MarkdownV2(toKebabCase(name))} \\- ${escapers.MarkdownV2(commands[name].title)}`)
 
         if (commands[name].description) {
           output.push(`_${escapers.MarkdownV2(commands[name].description)}_`)

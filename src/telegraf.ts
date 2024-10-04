@@ -1,5 +1,4 @@
 import { Context, Telegraf } from 'telegraf'
-import { Update } from 'telegraf/types'
 
 export type TConversationData = {
   tag: string
@@ -14,8 +13,8 @@ export class MyTelegraf<C extends Context = Context> extends Telegraf {
     super(token, options)
   }
 
-  initConversation(ctx: Context<Update.MessageUpdate>, tag: string) {
-    this.conversations[ctx.from.id] = {
+  initConversation(userId: number, tag: string) {
+    this.conversations[userId] = {
       tag,
       step: 0,
       context: [],
@@ -24,6 +23,10 @@ export class MyTelegraf<C extends Context = Context> extends Telegraf {
 
   hasConversation(userId: number) {
     return this.conversations[userId]
+  }
+
+  stopConversation(userId: number) {
+    delete this.conversations[userId]
   }
 
   addConversationContext(userId: number, data: string) {
