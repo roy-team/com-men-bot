@@ -22,7 +22,7 @@ export default class extends Module {
 
           // Начать опрос по предложению
           void ctx.telegram.sendMessage(ctx.from.id, 'Опишите коротко суть предложения\n(Пожалуйста, дайте краткое описание вашего предложения, его целей и ожидаемого эффекта)\nВы можете прервать опрос используя команду /stop')
-          this.bot.initConversation(ctx, 'improvement')
+          this.bot.initConversation(ctx.from.id, 'improvement')
         }
       }
     }
@@ -63,6 +63,9 @@ export default class extends Module {
               // Отправить администратору информацию об опросе
               await ctx.telegram.sendMessage(data.superAdminId, 'Ответы на опрос:\n' +
                                                                 conversation.context.join('\n------------------------------\n'))
+
+              // Остановить текущий опрос
+              this.bot.stopConversation(ctx.from.id)
             }
           })
     }
