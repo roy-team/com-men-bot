@@ -6,7 +6,9 @@ import { Context, Markup } from 'telegraf'
 import { escapers } from '@telegraf/entity'
 import Module, { CommandContext, isGroupMember } from '@src/module.js'
 import { ChatFromGetChat } from 'telegraf/types'
-import { getSetting, setSettings } from '@src/telegram.js'
+import { getSetting, setSetting, setSettings } from '@src/telegram.js'
+
+const invites: string[] = []
 
 // noinspection JSUnusedGlobalSymbols
 export default class extends Module {
@@ -59,6 +61,38 @@ export default class extends Module {
                 })
             }
           })
+      }
+    }
+
+    this.commands.inviteAdmin = {
+      title: 'Пригласить администратора',
+      access: ['privateAll'],
+      func: (ctx: CommandContext) => {
+        if (ctx.payload) {
+          getRegisterOptions()
+            .then((data) => {
+              if (data.adminIds.includes(ctx.from.id.toString())) {
+                void ctx.reply('Вы уже являетесь администратором. Команда должна быть отправлена будущим администратором.')
+              } else {
+                if (invites.includes(ctx.payload)) {
+                  void setSetting('registerAdmins', JSON.stringify([...data.onlyAdminIds, ctx.from.id.toString()]))
+                  delete invites[invites.indexOf(ctx.payload)]
+                  void ctx.reply('Вы назначены администратором')
+                } else {
+                  void ctx.reply('Приглашение уже было использовано')
+                }
+              }
+            })
+        } else {
+          const inviteCode = Array.from({ length: 8 }, () => Math.random().toString(36).substring(2, 3)).join('')
+          invites.push(inviteCode)
+          void ctx.reply(
+            `Для добавления в список администраторов, отправьте участнику группы команду \`/invite_admin ${inviteCode}\``,
+            {
+              parse_mode: 'MarkdownV2',
+            }
+          )
+        }
       }
     }
 
@@ -172,6 +206,8 @@ export async function getRegisterOptions() {
     adminIds = []
   }
 
+  const onlyAdminIds = adminIds.map((item) => item)
+
   if (superAdminId) {
     adminIds.unshift(superAdminId)
   }
@@ -180,6 +216,7 @@ export async function getRegisterOptions() {
     groupId: await getSetting('registerGroup'),
     superAdminId,
     adminIds,
+    onlyAdminIds,
   }
 }
 
