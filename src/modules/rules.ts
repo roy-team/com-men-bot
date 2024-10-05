@@ -17,6 +17,7 @@ export default class extends Module {
 
     this.commands.setRules = {
       title: 'Установить правила группы',
+      access: ['privateAdmin'],
       func: (ctx) => {
         void ctx.reply('Для изменения списка правил отправьте этот список одним сообщением.\nВы можете отменить изменение правил используя команду /stop')
         this.bot.initConversation(ctx.from.id, 'set-rules')

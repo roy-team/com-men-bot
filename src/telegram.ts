@@ -127,6 +127,12 @@ export default async function (token: string, pathModules: string): Promise<MyTe
     }
   })
 
+  // Принудительная остановка текущей беседы/опроса
+  bot.command('stop', async (ctx) => {
+    bot.stopConversation(ctx.from.id)
+    void ctx.reply('Текущее действие было отменено')
+  })
+
   // Поиск в модулях определений других команд
   modules.forEach((module) => {
     for (const name in module.commands) {
