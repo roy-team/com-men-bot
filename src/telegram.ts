@@ -233,11 +233,17 @@ function toKebabCase(name: string) {
   return name.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
 }
 
-export async function getSetting(name: string) {
-  const row = await sequelize.models.Settings.findOne({ where: { name } }) as unknown as
-    { name: string, value: string } | null
+const cacheSettings: Record<string, string | undefined> = {}
 
-  return row !== null ? row.value : undefined
+export async function getSetting(name: string) {
+  if (cacheSettings[name] === undefined) {
+    const row = await sequelize.models.Settings.findOne({ where: { name } }) as unknown as
+      { name: string, value: string } | null
+
+    cacheSettings[name] = row !== null ? row.value : undefined
+  }
+
+  return cacheSettings[name]
 }
 
 export async function setSetting(name: string, value: string) {
@@ -263,12 +269,16 @@ export async function setSettings(name: string | Record<string, string | undefin
         name: item,
         value: values[item],
       })
+
+      cacheSettings[item] = values[item]
     } else {
       void sequelize.models.Settings.destroy({
         where: {
           name: item,
         },
       })
+
+      delete cacheSettings[item]
     }
   }
 }
