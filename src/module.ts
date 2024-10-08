@@ -65,6 +65,9 @@ export default class Module {
 
   setup(): void {}
 
+  // Стартовые команды
+  async start(): void {}
+
   // Реакция на предопределенную команду start
   startCommand(ctx: CommandContext): void {}
 

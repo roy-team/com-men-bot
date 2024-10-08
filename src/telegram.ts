@@ -226,6 +226,10 @@ export default async function (token: string, pathModules: string): Promise<MyTe
     })
   })
 
+  modules.forEach((module) => {
+    module.start()
+  })
+
   return bot
 }
 
