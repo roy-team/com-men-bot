@@ -5,6 +5,7 @@ import Module, { CommandContext, getUsername, isGroupMember, TextContext } from 
 import { getRegisterOptions } from '@src/modules/register.js'
 import { TConversationData } from '@src/telegraf.js'
 import openAIRequest from '@src/plugins/openai.js'
+import { statAddComplaint } from '@src/modules/statistics.js'
 
 // noinspection JSUnusedGlobalSymbols
 export default class extends Module {
@@ -106,6 +107,8 @@ export default class extends Module {
                 'Please process the following complaint:\n\n' + conversation.context.join('\n\n'),
               ])
               await ctx.telegram.sendMessage(data.superAdminId, message)
+
+              void statAddComplaint()
             }
           })
     }

@@ -2,7 +2,7 @@
  * Сбор и анализ статистики по групповому чату
  */
 import { DataTypes } from 'sequelize'
-import Module, { CommandContext, getHashFromId, TextContext } from '@src/module.js'
+import Module, { CommandContext, getHashFromId, ReactionContext, TextContext } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 import { sequelize } from '@src/plugins/sequelize.js'
 import openAIRequest from '@src/plugins/openai.js'
@@ -14,6 +14,12 @@ interface IStatMessage {
   message: string
   is_reply: boolean
   timestamp: number
+}
+
+interface IStatOther {
+  complaints: number
+  offers: number
+  reactions: number
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -40,6 +46,24 @@ export default class extends Module {
       timestamp: {
         type: DataTypes.NUMBER,
         allowNull: false,
+      },
+    }
+
+    this.dbModels.StatOther = {
+      complaints: {
+        type: DataTypes.NUMBER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      offers: {
+        type: DataTypes.NUMBER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      reactions: {
+        type: DataTypes.NUMBER,
+        allowNull: false,
+        defaultValue: 0,
       },
     }
 
@@ -74,6 +98,16 @@ export default class extends Module {
     }
   }
 
+  async start() {
+    if (await sequelize.models.StatOther.count() === 0) {
+      await sequelize.models.StatOther.create({
+        complaints: 0,
+        offers: 0,
+        reactions: 0,
+      })
+    }
+  }
+
   onReceiveForwardGroup(ctx: TextContext) {
     void sequelize.models.StatMessages.create({
       senderHash: getHashFromId(ctx.message.from.id),
@@ -92,6 +126,12 @@ export default class extends Module {
       is_reply: ctx.message.reply_to_message !== undefined,
       timestamp: Date.now(),
     })
+  }
+
+  onMessageReaction(ctx: ReactionContext) {
+    if (ctx.update.message_reaction.chat.type !== 'private') {
+      void statAddReaction()
+    }
   }
 
   // Анализ списка сообщений
@@ -186,11 +226,19 @@ export default class extends Module {
         subjects,
       }
 
+      // Расширенная статистика
+      const statOthers = (await sequelize.models.StatOther.findAll()) as unknown as IStatOther[]
+      const statOther = {
+        complaints: statOthers.length > 0 ? statOthers[0].complaints : 0,
+        offers: statOthers.length > 0 ? statOthers[0].offers : 0,
+        reactions: statOthers.length > 0 ? statOthers[0].reactions : 0,
+      }
+
       // Создание и отправка файла
       const csvContent = [
         'Общая статистика:',
-        'Дата,Всего сообщений,Всего ответов,Всего участников',
-        `${nowFormat},${statistics.messages},${statistics.replies},${statistics.members}`,
+        'Дата,Сообщений,Ответов,Реакций,Жалоб,Предложений,Всего участников',
+        `${nowFormat},${statistics.messages},${statistics.replies},${statOther.reactions},${statOther.complaints},${statOther.offers},${statistics.members}`,
         '',
         'Распределение сообщений по пользователям:',
         'ID,Имя,Сообщения,Дата',
@@ -210,4 +258,22 @@ export default class extends Module {
       })
     }
   }
+}
+
+export async function statAddComplaint() {
+  void sequelize.models.StatOther.update({
+    complaints: sequelize.literal('complaints + 1'),
+  }, { where: {} })
+}
+
+export async function statAddOffer() {
+  void sequelize.models.StatOther.update({
+    offers: sequelize.literal('offers + 1'),
+  }, { where: {} })
+}
+
+export async function statAddReaction() {
+  void sequelize.models.StatOther.update({
+    reactions: sequelize.literal('reactions + 1'),
+  }, { where: {} })
 }

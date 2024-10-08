@@ -1,7 +1,9 @@
 import Module, { CommandContext, getUsername, isGroupMember, TextContext } from '@src/module.js'
 import { getRegisterOptions } from '@src/modules/register.js'
 import { TConversationData } from '@src/telegraf.js'
+import { statAddOffer } from '@src/modules/statistics.js'
 
+// noinspection JSUnusedGlobalSymbols
 export default class extends Module {
   conversationTags = ['improvement']
 
@@ -66,6 +68,8 @@ export default class extends Module {
 
               // Остановить текущий опрос
               this.bot.stopConversation(ctx.from.id)
+
+              void statAddOffer()
             }
           })
     }
