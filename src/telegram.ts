@@ -226,6 +226,12 @@ export default async function (token: string, pathModules: string): Promise<MyTe
     })
   })
 
+  bot.on('message_reaction', async (ctx) => {
+    modules.forEach((module) => {
+      module.onMessageReaction(ctx)
+    })
+  })
+
   modules.forEach((module) => {
     module.start()
   })

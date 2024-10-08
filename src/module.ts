@@ -30,6 +30,7 @@ export type CommandContext = Context<Update.MessageUpdate<Message.TextMessage>> 
   payload: string
   args: string[]
 }
+export type ReactionContext = Context<Update.MessageReactionUpdate>
 
 export default class Module {
   // Позволяет временно отключить модуль без удаления
@@ -66,7 +67,7 @@ export default class Module {
   setup(): void {}
 
   // Стартовые команды
-  async start(): void {}
+  async start(): Promise<void> {}
 
   // Реакция на предопределенную команду start
   startCommand(ctx: CommandContext): void {}
@@ -91,6 +92,9 @@ export default class Module {
 
   // Реакция на получение текстового сообщения в групповом чате
   onReceiveTextGroup(ctx: TextContext): void {}
+
+  // Реакция на реакцию на сообщении
+  onMessageReaction(ctx: ReactionContext): void {}
 }
 
 // Преобразовать ID в хеш

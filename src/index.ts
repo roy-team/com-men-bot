@@ -27,7 +27,14 @@ if (botToken === undefined ||
   const pathModules = path.join(path.dirname(fileURLToPath(import.meta.url)), 'modules')
   void telegram(botToken, pathModules)
     .then((bot) => {
-      void bot.launch({ webhook })
+      void bot.launch({
+        webhook,
+        allowedUpdates: [
+          'message',
+          'message_reaction',
+          'callback_query',
+        ],
+      })
 
       // Позволяет "плавно" остановить программу
       process.once('SIGINT', () => bot.stop('SIGINT'))
