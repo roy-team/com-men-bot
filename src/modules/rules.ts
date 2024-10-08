@@ -2,6 +2,7 @@ import Module, { TextContext } from '@src/module.js'
 import { getSetting, setSetting } from '@src/telegram.js'
 import { TConversationData } from '@src/telegraf.js'
 
+// noinspection JSUnusedGlobalSymbols
 export default class extends Module {
   conversationTags = ['set-rules']
 

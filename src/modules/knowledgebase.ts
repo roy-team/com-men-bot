@@ -1,5 +1,6 @@
 import Module from '@src/module.js'
 
+// noinspection JSUnusedGlobalSymbols
 export default class extends Module {
   setup() {
     this.commands.knowledgebase = {
