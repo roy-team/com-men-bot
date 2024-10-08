@@ -17,48 +17,32 @@ export default class extends Module {
     this.commands.registerGroup = {
       title: 'Регистрация группы',
       description: 'Разовое действие для настройки бота',
-      access: ['privateAll'],
+      access: ['groupAll'],
       func: (ctx: CommandContext) => {
         getRegisterOptions()
           .then((data) => {
             if (data.groupId === undefined) {
-              ctx.telegram.getChatMember(ctx.payload, ctx.from.id)
+              ctx.telegram.getChatMember(ctx.chat.id, ctx.from.id)
                 .then((member) => {
                   if (['creator', 'administrator'].includes(member.status)) {
                     void setSettings({
-                      registerGroup: ctx.payload,
+                      registerGroup: ctx.chat.id.toString(),
                       registerSuperAdmin: ctx.from.id.toString(),
                     })
 
-                    ctx.telegram.getChat(ctx.payload)
+                    ctx.telegram.getChat(ctx.chat.id)
                       .then((chat) => {
                         const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
                         void ctx.reply(
-                          `Группа *${chatTitle}* успешно зарегистрирована\\. Вы добавлены как супер администратор`,
+                          `Группа *${chatTitle}* успешно зарегистрирована\\`,
                           {
                             parse_mode: 'MarkdownV2',
                           }
                         )
                       })
-                  } else {
-                    void ctx.reply('Вы должны быть администратором группы')
                   }
                 })
-                .catch((e) => {
-                  console.error(e)
-                  void ctx.reply('Проверьте ID чата')
-                })
-            } else {
-              ctx.telegram.getChat(data.groupId)
-                .then((chat) => {
-                  const chatTitle = escapers.MarkdownV2((chat as ChatFromGetChat & { title: string }).title)
-                  void ctx.reply(
-                    `Уже зарегистрирована группа *${chatTitle}*`,
-                    {
-                      parse_mode: 'MarkdownV2',
-                    }
-                  )
-                })
+                .catch(() => {})
             }
           })
       }
@@ -168,7 +152,7 @@ export default class extends Module {
           void ctx.reply([
             'Для первоначальной настройки:',
             '1. Добавьте бота в группу с правами администратора',
-            '2. Отправьте сюда команду для регистрации группы /register_group <ID_группы>',
+            '2. Отправьте в группу команду для регистрации /register_group',
           ].join('\n'))
         } else if (data.superAdminId === ctx.chat.id.toString()) {
           void ctx.reply('Вы уже являетесь супер администратором')

@@ -160,7 +160,7 @@ export default async function (token: string, pathModules: string): Promise<MyTe
           access.includes('privateAdmin') && regOptions.adminIds.includes(ctx.from.id.toString()) ||
           regOptions.superAdminId === ctx.from.id.toString()
       } else {
-        if (regOptions.groupId !== ctx.chat.id.toString()) {
+        if (regOptions.groupId !== undefined && regOptions.groupId !== ctx.chat.id.toString()) {
           return
         }
 
